@@ -561,6 +561,16 @@ function Reception({ onLogout, isOwner }) {
     } catch (e) { alert("Error: " + e.message); }
   }
 
+  async function deletePatient(patient) {
+    const confirmed = window.confirm(`Delete "${patient.name}"?\n\nThis cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase.from("patients").update({ is_active: false }).eq("id", patient.id);
+      if (error) throw new Error(error.message);
+      update(ps => ps.filter(p => p.id !== patient.id));
+    } catch (e) { alert("Error deleting: " + e.message); }
+  }
+
   return (
     <div style={{ minHeight: isOwner ? "auto" : "100vh", background:C.gray[50], fontFamily:"system-ui, sans-serif" }}>
       {!isOwner && <TopBar role="reception" tabs={tabs} activeTab={tab} onTabChange={setTab} onLogout={onLogout} />}
@@ -667,7 +677,16 @@ function Reception({ onLogout, isOwner }) {
                       <p style={{ margin:"0 0 3px", fontWeight:700, fontSize:15, color:"#1a1a2e" }}>{p.name}</p>
                       <p style={{ margin:0, fontSize:12, color:C.gray[600] }}>Age {p.age} · {p.phone} · BP: {p.bp||"N/A"}</p>
                     </div>
-                    <StatusBadge status={p.status} />
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <StatusBadge status={p.status} />
+                      {isOwner && (
+                        <button onClick={()=>deletePatient(p)} style={{
+                          background:C.red[50], color:C.red[800], border:`1px solid ${C.red[100]}`,
+                          borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700,
+                          cursor:"pointer", fontFamily:"inherit",
+                        }}>Delete</button>
+                      )}
+                    </div>
                   </div>
                   {p.diagnosis && (
                     <div style={{ marginTop:10, padding:"9px 13px", background:C.green[50], borderRadius:8, fontSize:13, color:C.green[800] }}>
